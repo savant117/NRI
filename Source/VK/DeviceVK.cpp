@@ -1633,12 +1633,16 @@ void DeviceVK::CheckSupportedDeviceExtensions(const Vector<const char*>& extensi
     m_IsHDRExtSupported = IsExtensionInList(VK_EXT_HDR_METADATA_EXTENSION_NAME, extensions);
     m_IsFP16Supported = IsExtensionInList(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME, extensions);
     m_IsBufferDeviceAddressSupported = IsExtensionInList(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, extensions);
+#ifdef VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
     m_IsSynchronization2Supported = IsExtensionInList(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, extensions);
+#endif
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     m_IsRayTracingExtSupported = m_IsDescriptorIndexingExtSupported;
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, extensions);
+#endif
 #ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
     m_IsMicroMapSupported = IsExtensionInList(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME, extensions);
 #endif
@@ -1661,11 +1665,13 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
         return Result::UNSUPPORTED;
     }
 
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     extensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
     extensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
     extensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
     extensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
     extensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+#endif
     extensions.push_back(VK_NV_MESH_SHADER_EXTENSION_NAME);
     extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
     extensions.push_back(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME);
@@ -1674,7 +1680,9 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
     extensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
     extensions.push_back(VK_EXT_HDR_METADATA_EXTENSION_NAME);
     extensions.push_back(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
+#ifdef VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
     extensions.push_back(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
+#endif
 #ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
     extensions.push_back(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
 #endif
@@ -1699,6 +1707,7 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
     VkPhysicalDeviceMeshShaderFeaturesNV meshShaderFeatures =
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV };
 
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingFeatures =
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR };
 
@@ -1707,6 +1716,7 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
 
     VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeatures = 
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR };
+#endif
 
     VkPhysicalDevice16BitStorageFeatures storageFeatures = 
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES };
@@ -1714,8 +1724,10 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features =
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR };
 
+#ifdef VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
     VkPhysicalDeviceSynchronization2Features syncronization2Fetures =
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES };
+#endif
 
 #ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
     VkPhysicalDeviceOpacityMicromapFeaturesEXT  micromapFeatures =
@@ -1745,6 +1757,7 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
         deviceFeatures2.pNext = &meshShaderFeatures;
     }
 
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     if (m_IsRayTracingExtSupported)
     {
         rayTracingFeatures.pNext = deviceFeatures2.pNext;
@@ -1754,6 +1767,7 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
         rayQueryFeatures.pNext = deviceFeatures2.pNext;
         deviceFeatures2.pNext = &rayQueryFeatures;
     }
+#endif
 
     if (m_IsFP16Supported)
     {
@@ -1761,11 +1775,13 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
         deviceFeatures2.pNext = &float16Int8Features;
     }
 
+#ifdef VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
     if (m_IsSynchronization2Supported)
     {
         syncronization2Fetures.pNext = deviceFeatures2.pNext;
         deviceFeatures2.pNext = &syncronization2Fetures;
     }
+#endif
 
 #ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
     if (m_IsMicroMapSupported)
@@ -1843,6 +1859,7 @@ void DeviceVK::CreateCommandQueues()
 
 void DeviceVK::RetrieveRayTracingInfo()
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     m_RayTracingDeviceProperties = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR };
 
     if (!m_IsRayTracingExtSupported)
@@ -1865,6 +1882,7 @@ void DeviceVK::RetrieveRayTracingInfo()
     m_DeviceDesc.rayTracingGeometryObjectMaxNum = (uint32_t)accelerationStructureProperties.maxGeometryCount;
     m_DeviceDesc.rayTracingShaderTableAligment = m_RayTracingDeviceProperties.shaderGroupBaseAlignment;
     m_DeviceDesc.rayTracingShaderTableMaxStride = m_RayTracingDeviceProperties.maxShaderGroupStride;
+#endif
 }
 
 void DeviceVK::RetrieveMeshShaderInfo()
@@ -2211,6 +2229,7 @@ Result DeviceVK::ResolveDispatchTable()
         RESOLVE_DEVICE_FUNCTION(CmdEndDebugUtilsLabelEXT);
     }
 
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     if (m_IsRayTracingExtSupported)
     {
         RESOLVE_DEVICE_FUNCTION(CreateAccelerationStructureKHR);
@@ -2224,6 +2243,7 @@ Result DeviceVK::ResolveDispatchTable()
         RESOLVE_DEVICE_FUNCTION(CmdWriteAccelerationStructuresPropertiesKHR);
         RESOLVE_DEVICE_FUNCTION(CmdTraceRaysKHR);
     }
+#endif
 
     if (m_IsBufferDeviceAddressSupported)
     {

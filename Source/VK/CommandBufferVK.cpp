@@ -772,6 +772,7 @@ inline void CommandBufferVK::CopyWholeTexture(const TextureVK& dstTexture, uint3
 inline void CommandBufferVK::BuildTopLevelAccelerationStructure(uint32_t instanceNum, const Buffer& buffer, uint64_t bufferOffset,
     AccelerationStructureBuildBits flags, AccelerationStructure& dst, Buffer& scratch, uint64_t scratchOffset)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const VkAccelerationStructureKHR dstASHandle = ((const AccelerationStructureVK&)dst).GetHandle(m_PhysicalDeviceIndex);
     const VkDeviceAddress scratchAddress = ((BufferVK&)scratch).GetDeviceAddress(m_PhysicalDeviceIndex) + scratchOffset;
     const VkDeviceAddress bufferAddress = ((BufferVK&)buffer).GetDeviceAddress(m_PhysicalDeviceIndex) + bufferOffset;
@@ -800,11 +801,13 @@ inline void CommandBufferVK::BuildTopLevelAccelerationStructure(uint32_t instanc
     const VkAccelerationStructureBuildRangeInfoKHR* rangeArrays[1] = { &range };
 
     m_VK.CmdBuildAccelerationStructuresKHR(m_Handle, 1, &buildGeometryInfo, rangeArrays);
+#endif
 }
 
 inline void CommandBufferVK::BuildBottomLevelAccelerationStructure(uint32_t geometryObjectNum, const GeometryObject* geometryObjects,
     AccelerationStructureBuildBits flags, AccelerationStructure& dst, Buffer& scratch, uint64_t scratchOffset)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const VkAccelerationStructureKHR dstASHandle = ((const AccelerationStructureVK&)dst).GetHandle(m_PhysicalDeviceIndex);
     const VkDeviceAddress scratchAddress = ((BufferVK&)scratch).GetDeviceAddress(m_PhysicalDeviceIndex) + scratchOffset;
 
@@ -829,11 +832,13 @@ inline void CommandBufferVK::BuildBottomLevelAccelerationStructure(uint32_t geom
 
     FREE_SCRATCH(m_Device, ranges, geometryObjectNum);
     FREE_SCRATCH(m_Device, geometries, geometryObjectNum);
+#endif
 }
 
 inline void CommandBufferVK::UpdateTopLevelAccelerationStructure(uint32_t instanceNum, const Buffer& buffer, uint64_t bufferOffset,
     AccelerationStructureBuildBits flags, AccelerationStructure& dst, AccelerationStructure& src, Buffer& scratch, uint64_t scratchOffset)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const VkAccelerationStructureKHR srcASHandle = ((const AccelerationStructureVK&)src).GetHandle(m_PhysicalDeviceIndex);
     const VkAccelerationStructureKHR dstASHandle = ((const AccelerationStructureVK&)dst).GetHandle(m_PhysicalDeviceIndex);
     const VkDeviceAddress scratchAddress = ((BufferVK&)scratch).GetDeviceAddress(m_PhysicalDeviceIndex) + scratchOffset;
@@ -864,11 +869,13 @@ inline void CommandBufferVK::UpdateTopLevelAccelerationStructure(uint32_t instan
     const VkAccelerationStructureBuildRangeInfoKHR* rangeArrays[1] = { &range };
 
     m_VK.CmdBuildAccelerationStructuresKHR(m_Handle, 1, &buildGeometryInfo, rangeArrays);
+#endif
 }
 
 inline void CommandBufferVK::UpdateBottomLevelAccelerationStructure(uint32_t geometryObjectNum, const GeometryObject* geometryObjects,
     AccelerationStructureBuildBits flags, AccelerationStructure& dst, AccelerationStructure& src, Buffer& scratch, uint64_t scratchOffset)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const VkAccelerationStructureKHR srcASHandle = ((const AccelerationStructureVK&)src).GetHandle(m_PhysicalDeviceIndex);
     const VkAccelerationStructureKHR dstASHandle = ((const AccelerationStructureVK&)dst).GetHandle(m_PhysicalDeviceIndex);
     const VkDeviceAddress scratchAddress = ((BufferVK&)scratch).GetDeviceAddress(m_PhysicalDeviceIndex) + scratchOffset;
@@ -895,10 +902,12 @@ inline void CommandBufferVK::UpdateBottomLevelAccelerationStructure(uint32_t geo
 
     FREE_SCRATCH(m_Device, ranges, geometryObjectNum);
     FREE_SCRATCH(m_Device, geometries, geometryObjectNum);
+#endif
 }
 
 inline void CommandBufferVK::CopyAccelerationStructure(AccelerationStructure& dst, AccelerationStructure& src, CopyMode copyMode)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const VkAccelerationStructureKHR dstASHandle = ((const AccelerationStructureVK&)dst).GetHandle(m_PhysicalDeviceIndex);
     const VkAccelerationStructureKHR srcASHandle = ((const AccelerationStructureVK&)src).GetHandle(m_PhysicalDeviceIndex);
 
@@ -909,11 +918,13 @@ inline void CommandBufferVK::CopyAccelerationStructure(AccelerationStructure& ds
     info.mode = GetCopyMode(copyMode);
 
     m_VK.CmdCopyAccelerationStructureKHR(m_Handle, &info);
+#endif
 }
 
 inline void CommandBufferVK::WriteAccelerationStructureSize(const AccelerationStructure* const* accelerationStructures, uint32_t accelerationStructureNum,
     QueryPool& queryPool, uint32_t queryPoolOffset)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     VkAccelerationStructureKHR* ASes = ALLOCATE_SCRATCH(m_Device, VkAccelerationStructureKHR, accelerationStructureNum);
 
     for (uint32_t i = 0; i < accelerationStructureNum; i++)
@@ -925,10 +936,12 @@ inline void CommandBufferVK::WriteAccelerationStructureSize(const AccelerationSt
         queryPoolHandle, queryPoolOffset);
 
     FREE_SCRATCH(m_Device, ASes, accelerationStructureNum);
+#endif
 }
 
 inline void CommandBufferVK::DispatchRays(const DispatchRaysDesc& dispatchRaysDesc)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     VkStridedDeviceAddressRegionKHR raygen = {};
     raygen.deviceAddress = GetBufferDeviceAddress(dispatchRaysDesc.raygenShader.buffer, m_PhysicalDeviceIndex) + dispatchRaysDesc.raygenShader.offset;
     raygen.size = dispatchRaysDesc.raygenShader.size;
@@ -950,6 +963,7 @@ inline void CommandBufferVK::DispatchRays(const DispatchRaysDesc& dispatchRaysDe
     callable.stride = dispatchRaysDesc.callableShaders.stride;
 
     m_VK.CmdTraceRaysKHR(m_Handle, &raygen, &miss, &hit, &callable, dispatchRaysDesc.width, dispatchRaysDesc.height, dispatchRaysDesc.depth);
+#endif
 }
 
 inline void CommandBufferVK::DispatchMeshTasks(uint32_t taskNum)

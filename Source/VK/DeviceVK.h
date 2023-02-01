@@ -156,7 +156,9 @@ namespace nri
         VkPhysicalDeviceMemoryProperties m_MemoryProps = {};
         DispatchTable m_VK = {};
         DeviceDesc m_DeviceDesc = {};
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
         VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_RayTracingDeviceProperties = {};
+#endif
         std::array<uint32_t, COMMAND_QUEUE_TYPE_NUM> m_FamilyIndices = {};
         std::array<CommandQueueVK*, COMMAND_QUEUE_TYPE_NUM> m_Queues = {};
         Vector<uint32_t> m_PhysicalDeviceIndices;

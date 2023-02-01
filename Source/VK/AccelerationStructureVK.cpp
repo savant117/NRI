@@ -20,6 +20,7 @@ using namespace nri;
 
 AccelerationStructureVK::~AccelerationStructureVK()
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const auto& vk = m_Device.GetDispatchTable();
 
     if (!m_OwnsNativeObjects)
@@ -33,10 +34,12 @@ AccelerationStructureVK::~AccelerationStructureVK()
 
     if (m_Buffer != nullptr)
         m_Device.DestroyBuffer(*(Buffer*)m_Buffer);
+#endif
 }
 
 Result AccelerationStructureVK::Create(const AccelerationStructureDesc& accelerationStructureDesc)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     m_OwnsNativeObjects = true;
     m_Type = GetAccelerationStructureType(accelerationStructureDesc.type);
     m_BuildFlags = GetAccelerationStructureBuildFlags(accelerationStructureDesc.flags);
@@ -60,10 +63,14 @@ Result AccelerationStructureVK::Create(const AccelerationStructureDesc& accelera
     m_Buffer = (BufferVK*)buffer;
 
     return result;
+#else
+    return Result::UNSUPPORTED;
+#endif
 }
 
 Result AccelerationStructureVK::Create(const AccelerationStructureVulkanDesc& accelerationStructureDesc)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     m_OwnsNativeObjects = false;
     m_Type = VK_ACCELERATION_STRUCTURE_TYPE_MAX_ENUM_KHR;
     m_BuildFlags = 0;
@@ -94,10 +101,14 @@ Result AccelerationStructureVK::Create(const AccelerationStructureVulkanDesc& ac
     m_UpdateScratchSize = accelerationStructureDesc.updateScratchSize;
 
     return Result::SUCCESS;
+#else
+    return Result::UNSUPPORTED;
+#endif
 }
 
 void AccelerationStructureVK::PrecreateBottomLevel(const AccelerationStructureDesc& accelerationStructureDesc)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const auto buildType = VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR;
 
     VkAccelerationStructureBuildGeometryInfoKHR buildInfo = {};
@@ -125,10 +136,12 @@ void AccelerationStructureVK::PrecreateBottomLevel(const AccelerationStructureDe
     m_AccelerationStructureSize = sizeInfo.accelerationStructureSize;
 
     FREE_SCRATCH(m_Device, primitiveMaxNums, accelerationStructureDesc.instanceOrGeometryObjectNum);
+#endif
 }
 
 void AccelerationStructureVK::PrecreateTopLevel(const AccelerationStructureDesc& accelerationStructureDesc)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const auto buildType = VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR;
 
     VkAccelerationStructureGeometryKHR geometry = {};
@@ -156,10 +169,12 @@ void AccelerationStructureVK::PrecreateTopLevel(const AccelerationStructureDesc&
     m_BuildScratchSize = sizeInfo.buildScratchSize;
     m_UpdateScratchSize = sizeInfo.updateScratchSize;
     m_AccelerationStructureSize = sizeInfo.accelerationStructureSize;
+#endif
 }
 
 Result AccelerationStructureVK::FinishCreation()
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     if (m_Buffer == nullptr)
         return Result::FAILURE;
 
@@ -191,21 +206,28 @@ Result AccelerationStructureVK::FinishCreation()
     }
 
     return Result::SUCCESS;
+#else
+    return Result::UNSUPPORTED;
+#endif
 }
 
 inline void AccelerationStructureVK::SetDebugName(const char* name)
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     std::array<uint64_t, PHYSICAL_DEVICE_GROUP_MAX_SIZE> handles;
     for (size_t i = 0; i < handles.size(); i++)
         handles[i] = (uint64_t)m_Handles[i];
 
     m_Device.SetDebugNameToDeviceGroupObject(VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR, handles.data(), name);
     m_Buffer->SetDebugName(name);
+#endif
 }
 
 inline void AccelerationStructureVK::GetMemoryInfo(MemoryDesc& memoryDesc) const
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     m_Buffer->GetMemoryInfo(MemoryLocation::DEVICE, memoryDesc);
+#endif
 }
 
 inline uint64_t AccelerationStructureVK::GetUpdateScratchBufferSize() const
@@ -220,11 +242,15 @@ inline uint64_t AccelerationStructureVK::GetBuildScratchBufferSize() const
 
 inline Result AccelerationStructureVK::CreateDescriptor(uint32_t physicalDeviceMask, Descriptor*& descriptor) const
 {
+#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     DescriptorVK& descriptorImpl = *Allocate<DescriptorVK>(m_Device.GetStdAllocator(), m_Device);
     descriptorImpl.Create(m_Handles.data(), physicalDeviceMask);
     descriptor = (Descriptor*)&descriptorImpl;
 
     return Result::SUCCESS;
+#else
+    return Result::UNSUPPORTED;
+#endif
 }
 
 #include "AcceleratrionStructureVK.hpp"
