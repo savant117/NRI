@@ -109,6 +109,21 @@ Result SwapChainVK::CreateSurface(const SwapChainDesc& swapChainDesc)
         return Result::SUCCESS;
     }
 #endif
+#ifdef VK_USE_PLATFORM_ANDROID_KHR
+    if (swapChainDesc.windowSystemType == WindowSystemType::ANDROID)
+    {
+        VkAndroidSurfaceCreateInfoKHR androidSurfaceInfo = {};
+        androidSurfaceInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+        androidSurfaceInfo.window = (ANativeWindow*)swapChainDesc.window.android.window;
+
+        result = vk.CreateAndroidSurfaceKHR(m_Device, &androidSurfaceInfo, m_Device.GetAllocationCallbacks(), &m_Surface);
+
+        RETURN_ON_FAILURE(m_Device.GetLog(), result == VK_SUCCESS, GetReturnCode(result),
+            "Can't create a surface: vkCreateAndroidSurfaceKHR returned %d.", (int32_t)result);
+
+        return Result::SUCCESS;
+    }
+#endif
 
     return Result::UNSUPPORTED;
 }

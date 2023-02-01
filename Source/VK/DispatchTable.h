@@ -35,6 +35,9 @@ struct DispatchTable
 #if VK_USE_PLATFORM_WAYLAND_KHR
     VULKAN_FUNCTION(CreateWaylandSurfaceKHR);
 #endif
+#if VK_USE_PLATFORM_ANDROID_KHR
+    VULKAN_FUNCTION(CreateAndroidSurfaceKHR);
+#endif
     VULKAN_FUNCTION(DestroySurfaceKHR);
     VULKAN_FUNCTION(GetDeviceProcAddr);
     VULKAN_FUNCTION(DestroyInstance);

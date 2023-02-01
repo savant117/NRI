@@ -189,7 +189,7 @@
     #define NRI_FORWARD_STRUCT(name) struct name
     #define NRI_REF(arg) arg&
     #define NRI_REF_ACCESS(arg) (&arg)
-    #define NRI_ENUM_MEMBER(name, nameCaps, member) name::##member
+    #define NRI_ENUM_MEMBER(name, nameCaps, member) name::member
     #define NRI_DEFAULT_VALUE(arg) = arg
     #define NRI_ZERO_INIT {}
 
@@ -204,7 +204,7 @@
     #define NRI_ENUM(name, nameCaps, type, ...) \
         enum class name : type \
         { \
-            _NRI_EXPAND_ENUM(__VA_ARGS__) \
+            __VA_ARGS__ \
         }
 #else
     #define _NRI_ENUM_PREFIX(name) NRI_MERGE_TOKEN3(NRI_, name, _)

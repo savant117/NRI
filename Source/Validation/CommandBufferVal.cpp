@@ -35,10 +35,10 @@ static bool ValidateTextureTransitionBarrierDesc(const DeviceVal& device, uint32
 CommandBufferVal::CommandBufferVal(DeviceVal& device, CommandBuffer& commandBuffer, bool isWrapped) :
     DeviceObjectVal(device, commandBuffer),
     m_ValidationCommands(device.GetStdAllocator()),
-    m_RayTracingAPI(device.GetRayTracingInterface()),
-    m_MeshShaderAPI(device.GetMeshShaderInterface()),
+    m_IsRecordingStarted(isWrapped),
     m_IsWrapped(isWrapped),
-    m_IsRecordingStarted(isWrapped)
+    m_RayTracingAPI(device.GetRayTracingInterface()),
+    m_MeshShaderAPI(device.GetMeshShaderInterface())
 {
 }
 

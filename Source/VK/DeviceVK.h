@@ -183,7 +183,10 @@ namespace nri
         bool m_IsDebugUtilsSupported = false;
         bool m_IsFP16Supported = false;
         bool m_IsBufferDeviceAddressSupported = false;
+        bool m_IsSynchronization2Supported = false;
+#ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
         bool m_IsMicroMapSupported = false;
+#endif
         Library* m_Loader = nullptr;
 #if _WIN32
         ComPtr<IDXGIAdapter> m_Adapter;

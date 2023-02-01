@@ -54,3 +54,5 @@ External/AGS/
 _Build/
 _Compiler/
 _NRI_SDK/
+/NRI_Android/x64/Debug
+/NRI_Android/ARM64

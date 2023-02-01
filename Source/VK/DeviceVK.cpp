@@ -1099,6 +1099,7 @@ VkBool32 VKAPI_PTR DebugUtilsMessenger(
         type = "error";
         isError = true;
         break;
+    default: break;
     }
 
     if (!isWarning && !isError)
@@ -1213,6 +1214,9 @@ Result DeviceVK::CreateInstance(const DeviceCreationDesc& deviceCreationDesc)
     #endif
     #if VK_USE_PLATFORM_WAYLAND_KHR
         extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
+    #endif
+    #if VK_USE_PLATFORM_ANDROID_KHR
+        extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
     #endif
     extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
@@ -1629,13 +1633,15 @@ void DeviceVK::CheckSupportedDeviceExtensions(const Vector<const char*>& extensi
     m_IsHDRExtSupported = IsExtensionInList(VK_EXT_HDR_METADATA_EXTENSION_NAME, extensions);
     m_IsFP16Supported = IsExtensionInList(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME, extensions);
     m_IsBufferDeviceAddressSupported = IsExtensionInList(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, extensions);
-    m_IsMicroMapSupported = IsExtensionInList(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME, extensions);
-
+    m_IsSynchronization2Supported = IsExtensionInList(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsDescriptorIndexingExtSupported;
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME, extensions);
     m_IsRayTracingExtSupported = m_IsRayTracingExtSupported && IsExtensionInList(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, extensions);
+#ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
+    m_IsMicroMapSupported = IsExtensionInList(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME, extensions);
+#endif
 
     m_IsDemoteToHelperInvocationSupported = IsExtensionInList(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, extensions);
 }
@@ -1668,8 +1674,10 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
     extensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
     extensions.push_back(VK_EXT_HDR_METADATA_EXTENSION_NAME);
     extensions.push_back(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME);
-    extensions.push_back(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
     extensions.push_back(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
+#ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
+    extensions.push_back(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
+#endif
 
     FilterDeviceExtensions(extensions);
 
@@ -1706,11 +1714,13 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
     VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features =
         { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR };
 
-    VkPhysicalDeviceOpacityMicromapFeaturesEXT  micromapFeatures =
-    { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT };
-
     VkPhysicalDeviceSynchronization2Features syncronization2Fetures =
-    { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES };
+        { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES };
+
+#ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
+    VkPhysicalDeviceOpacityMicromapFeaturesEXT  micromapFeatures =
+        { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT };
+#endif
 
     deviceFeatures2.pNext = &bufferDeviceAddressFeatures;
 
@@ -1751,13 +1761,19 @@ Result DeviceVK::CreateLogicalDevice(const DeviceCreationDesc& deviceCreationDes
         deviceFeatures2.pNext = &float16Int8Features;
     }
 
+    if (m_IsSynchronization2Supported)
+    {
+        syncronization2Fetures.pNext = deviceFeatures2.pNext;
+        deviceFeatures2.pNext = &syncronization2Fetures;
+    }
+
+#ifdef VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME
     if (m_IsMicroMapSupported)
     {
         micromapFeatures.pNext = deviceFeatures2.pNext;
         deviceFeatures2.pNext = &micromapFeatures;
-        syncronization2Fetures.pNext = deviceFeatures2.pNext;
-        deviceFeatures2.pNext = &syncronization2Fetures;
     }
+#endif
 
     m_VK.GetPhysicalDeviceFeatures2(m_PhysicalDevices.front(), &deviceFeatures2);
 
@@ -2055,6 +2071,9 @@ Result DeviceVK::ResolveInstanceDispatchTable()
 #if VK_USE_PLATFORM_WAYLAND_KHR
     RESOLVE_INSTANCE_FUNCTION(CreateWaylandSurfaceKHR);
 #endif
+#if VK_USE_PLATFORM_ANDROID_KHR
+    RESOLVE_INSTANCE_FUNCTION(CreateAndroidSurfaceKHR);
+#endif
     RESOLVE_INSTANCE_FUNCTION(DestroySurfaceKHR);
     RESOLVE_INSTANCE_FUNCTION(GetDeviceProcAddr);
     RESOLVE_INSTANCE_FUNCTION(DestroyInstance);
@@ -2204,6 +2223,10 @@ Result DeviceVK::ResolveDispatchTable()
         RESOLVE_DEVICE_FUNCTION(CmdCopyAccelerationStructureKHR);
         RESOLVE_DEVICE_FUNCTION(CmdWriteAccelerationStructuresPropertiesKHR);
         RESOLVE_DEVICE_FUNCTION(CmdTraceRaysKHR);
+    }
+
+    if (m_IsBufferDeviceAddressSupported)
+    {
         RESOLVE_DEVICE_FUNCTION(GetBufferDeviceAddress);
     }
 
