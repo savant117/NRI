@@ -47,7 +47,6 @@ namespace nri
             flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 
         // TODO: add more usage bits
-#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
         if (usageMask & BufferUsageBits::RAY_TRACING_BUFFER)
         {
             flags |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
@@ -56,7 +55,6 @@ namespace nri
 
         if (usageMask & BufferUsageBits::ACCELERATION_STRUCTURE_BUILD_READ)
             flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
-#endif
 
         if (usageMask & BufferUsageBits::SHADER_RESOURCE)
         {
@@ -811,10 +809,8 @@ namespace nri
         return (VkCopyAccelerationStructureModeKHR)copyMode;
     }
 
-#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     void ConvertGeometryObjectSizesVK(uint32_t physicalDeviceIndex, VkAccelerationStructureGeometryKHR* destObjects, uint32_t* primitiveNums, const GeometryObject* sourceObjects, uint32_t objectNum);
     void ConvertGeometryObjectsVK(uint32_t physicalDeviceIndex, VkAccelerationStructureGeometryKHR* destObjects, VkAccelerationStructureBuildRangeInfoKHR* ranges, const GeometryObject* sourceObjects, uint32_t objectNum);
-#endif
 
     constexpr std::array<TextureType, (uint32_t)TextureType::MAX_NUM> TEXTURE_TYPE_TABLE = {
         TextureType::TEXTURE_1D, // VK_IMAGE_TYPE_1D

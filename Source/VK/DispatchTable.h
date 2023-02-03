@@ -155,8 +155,6 @@ struct DispatchTable
 
     VULKAN_FUNCTION(GetSwapchainImagesKHR);
     VULKAN_FUNCTION(SetHdrMetadataEXT);
-
-#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     VULKAN_FUNCTION(CreateAccelerationStructureKHR);
     VULKAN_FUNCTION(CreateRayTracingPipelinesKHR);
     VULKAN_FUNCTION(DestroyAccelerationStructureKHR);
@@ -167,8 +165,6 @@ struct DispatchTable
     VULKAN_FUNCTION(CmdCopyAccelerationStructureKHR);
     VULKAN_FUNCTION(CmdWriteAccelerationStructuresPropertiesKHR);
     VULKAN_FUNCTION(CmdTraceRaysKHR);
-#endif
-
     VULKAN_FUNCTION(GetBufferDeviceAddress);
 
     VULKAN_FUNCTION(CmdDrawMeshTasksNV);

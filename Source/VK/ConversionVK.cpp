@@ -13,8 +13,6 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 using namespace nri;
 
-#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
-
 void nri::ConvertGeometryObjectSizesVK(uint32_t physicalDeviceIndex, VkAccelerationStructureGeometryKHR* destObjects, uint32_t* primitiveNums,
     const GeometryObject* sourceObjects, uint32_t objectNum)
 {
@@ -92,8 +90,6 @@ void nri::ConvertGeometryObjectsVK(uint32_t physicalDeviceIndex, VkAccelerationS
         geometryDst.geometry.triangles.transformData.deviceAddress = transform;
     }
 }
-
-#endif
 
 TextureType GetTextureTypeVK(uint32_t vkImageType)
 {

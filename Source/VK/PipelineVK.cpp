@@ -177,7 +177,6 @@ Result PipelineVK::Create(const ComputePipelineDesc& computePipelineDesc)
 
 Result PipelineVK::Create(const RayTracingPipelineDesc& rayTracingPipelineDesc)
 {
-#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     m_OwnsNativeObjects = true;
     m_BindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;
 
@@ -274,9 +273,6 @@ Result PipelineVK::Create(const RayTracingPipelineDesc& rayTracingPipelineDesc)
         vk.DestroyShaderModule(m_Device, modulesBegin[i], m_Device.GetAllocationCallbacks());
 
     return Result::SUCCESS;
-#else
-    return Result::UNSUPPORTED;
-#endif
 }
 
 Result PipelineVK::CreateGraphics(NRIVkPipeline vkPipeline)
@@ -304,7 +300,6 @@ inline void PipelineVK::SetDebugName(const char* name)
 
 inline Result PipelineVK::WriteShaderGroupIdentifiers(uint32_t baseShaderGroupIndex, uint32_t shaderGroupNum, void* buffer) const
 {
-#ifdef VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
     const size_t dataSize = (size_t)(shaderGroupNum * m_Device.GetDesc().rayTracingShaderGroupIdentifierSize);
 
     const auto& vk = m_Device.GetDispatchTable();
@@ -314,9 +309,6 @@ inline Result PipelineVK::WriteShaderGroupIdentifiers(uint32_t baseShaderGroupIn
         "Can't get shader group identifiers: vkGetRayTracingShaderGroupHandlesKHR returned %d.", (int32_t)result);
 
     return Result::SUCCESS;
-#else
-    return Result::UNSUPPORTED;
-#endif
 }
 
 Result PipelineVK::SetupShaderStage(VkPipelineShaderStageCreateInfo& stage, const ShaderDesc& shaderDesc, VkShaderModule*& modules)
