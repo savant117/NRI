@@ -42,7 +42,7 @@ NRI_ENUM
     X11,
     WAYLAND,
     METAL,
-    ANDROID,
+    DROID,
 
     MAX_NUM
 );

@@ -110,7 +110,7 @@ Result SwapChainVK::CreateSurface(const SwapChainDesc& swapChainDesc)
     }
 #endif
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-    if (swapChainDesc.windowSystemType == WindowSystemType::ANDROID)
+    if (swapChainDesc.windowSystemType == WindowSystemType::DROID)
     {
         VkAndroidSurfaceCreateInfoKHR androidSurfaceInfo = {};
         androidSurfaceInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;

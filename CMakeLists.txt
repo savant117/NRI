@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.21)
 
 # Options
 option(NRI_DISABLE_XLIB_SUPPORT "Disable 'xlib' support" OFF)
 option(NRI_DISABLE_WAYLAND_SUPPORT "Disable 'wayland' support" OFF)
-option(NRI_STATIC_LIBRARY "Build static library" OFF)
+option(NRI_STATIC_LIBRARY "Build static library" ON)
 
 # Cached
 set(GLOBAL_BIN_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/_Build" CACHE STRING "")
@@ -37,12 +37,15 @@ else()
 endif()
 message("Packman platform: ${PACKMAN_PLATFORM}")
 
-execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/External/Packman/Packman${PACKMAN_EXT}" pull "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies.xml" -p ${PACKMAN_PLATFORM}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    RESULT_VARIABLE PACKMAN_RESULT)
+# Make sure not on android
+if(NOT (CMAKE_SYSTEM_NAME MATCHES "Android"))
+	execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/External/Packman/Packman${PACKMAN_EXT}" pull "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies.xml" -p ${PACKMAN_PLATFORM}
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		RESULT_VARIABLE PACKMAN_RESULT)
 
-if(NOT "${PACKMAN_RESULT}" STREQUAL "0")
-    message(FATAL_ERROR "Packman failed(code = ${PACKMAN_RESULT})")
+	if(NOT "${PACKMAN_RESULT}" STREQUAL "0")
+		message(FATAL_ERROR "Packman failed(code = ${PACKMAN_RESULT})")
+	endif()
 endif()
 
 # Setup dependencies
@@ -102,7 +105,7 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-else()
+elseif(NOT (CMAKE_SYSTEM_NAME MATCHES "Android"))
     set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
@@ -167,7 +170,11 @@ endif()
 file(GLOB VK_SOURCE "Source/VK/*.cpp" "Source/VK/*.h" "Source/VK/*.hpp")
 source_group("" FILES ${VK_SOURCE})
 add_library(NRI_VK STATIC ${VK_SOURCE})
-target_include_directories(NRI_VK PRIVATE "Include" "Source/Shared" "External/vulkan/include")
+if(CMAKE_SYSTEM_NAME MATCHES "Android")
+	target_include_directories(NRI_VK PRIVATE "Include" "Source/Shared")
+else()
+	target_include_directories(NRI_VK PRIVATE "Include" "Source/Shared" "External/vulkan/include")
+endif()
 target_compile_definitions(NRI_VK PRIVATE ${COMPILE_DEFINITIONS})
 target_compile_options(NRI_VK PRIVATE ${COMPILE_OPTIONS})
 target_link_libraries(NRI_VK PRIVATE NRI_Shared)
@@ -177,6 +184,8 @@ if(WIN32)
     target_compile_definitions(NRI_VK PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
     target_compile_definitions(NRI_VK PRIVATE VK_USE_PLATFORM_METAL_EXT)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Android")
+	target_compile_definitions(NRI_VK PRIVATE VK_USE_PLATFORM_ANDROID_KHR)
 else()
     if(NOT NRI_DISABLE_XLIB_SUPPORT)
         find_path(XLIB_HEADERS NAMES "X11/Xlib.h")
@@ -228,7 +237,11 @@ else()
     endif()
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE "Include" "Source/Shared" "External/vulkan/include")
+if(CMAKE_SYSTEM_NAME MATCHES "Android")
+	target_include_directories(${PROJECT_NAME} PRIVATE "Include" "Source/Shared")
+else()
+	target_include_directories(${PROJECT_NAME} PRIVATE "Include" "Source/Shared" "External/vulkan/include")
+endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${COMPILE_DEFINITIONS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
