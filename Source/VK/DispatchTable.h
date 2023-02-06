@@ -165,7 +165,8 @@ struct DispatchTable
     VULKAN_FUNCTION(CmdCopyAccelerationStructureKHR);
     VULKAN_FUNCTION(CmdWriteAccelerationStructuresPropertiesKHR);
     VULKAN_FUNCTION(CmdTraceRaysKHR);
-    VULKAN_FUNCTION(GetBufferDeviceAddress);
+	
+    VULKAN_FUNCTION(GetBufferDeviceAddressKHR);
 
     VULKAN_FUNCTION(CmdDrawMeshTasksNV);
 

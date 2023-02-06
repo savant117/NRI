@@ -1,12 +1,16 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.18)
 
 # Options
 option(NRI_DISABLE_XLIB_SUPPORT "Disable 'xlib' support" OFF)
 option(NRI_DISABLE_WAYLAND_SUPPORT "Disable 'wayland' support" OFF)
-option(NRI_STATIC_LIBRARY "Build static library" ON)
+option(NRI_STATIC_LIBRARY "Build static library" OFF)
 
 # Cached
-set(GLOBAL_BIN_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/_Build" CACHE STRING "")
+if(CMAKE_SYSTEM_NAME MATCHES "Android")
+	set(GLOBAL_BIN_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/_Build/${CMAKE_SYSTEM_NAME}/${ANDROID_ABI}" CACHE STRING "")
+else()
+	set(GLOBAL_BIN_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/_Build/${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}" CACHE STRING "")
+endif()
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "")
 
 # Create project
@@ -19,26 +23,26 @@ set(VERSION_MINOR ${CMAKE_MATCH_1})
 message("NRI v${VERSION_MAJOR}.${VERSION_MINOR}")
 project(NRI LANGUAGES C CXX)
 
-# Download dependencies using Packman
-if(WIN32)
-    set(PACKMAN_EXT ".cmd")
-endif()
-
-if((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") OR (CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64"))
-    if(WIN32)
-        set(PACKMAN_PLATFORM "windows-x86_64")
-    else()
-        set(PACKMAN_PLATFORM "linux-x86_64")
-    endif()
-elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64") OR (CMAKE_SYSTEM_PROCESSOR MATCHES "arm64"))
-    set(PACKMAN_PLATFORM "linux-aarch64")
-else()
-    message(FATAL_ERROR "Unsupported architecture: '${CMAKE_SYSTEM_PROCESSOR}'")
-endif()
-message("Packman platform: ${PACKMAN_PLATFORM}")
-
-# Make sure not on android
+# Run packman if not on android
 if(NOT (CMAKE_SYSTEM_NAME MATCHES "Android"))
+	# Download dependencies using Packman
+	if(WIN32)
+		set(PACKMAN_EXT ".cmd")
+	endif()
+
+	if((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") OR (CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64"))
+		if(WIN32)
+			set(PACKMAN_PLATFORM "windows-x86_64")
+		else()
+			set(PACKMAN_PLATFORM "linux-x86_64")
+		endif()
+	elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64") OR (CMAKE_SYSTEM_PROCESSOR MATCHES "arm64"))
+		set(PACKMAN_PLATFORM "linux-aarch64")
+	else()
+		message(FATAL_ERROR "Unsupported architecture: '${CMAKE_SYSTEM_PROCESSOR}'")
+	endif()
+	message("Packman platform: ${PACKMAN_PLATFORM}")
+
 	execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/External/Packman/Packman${PACKMAN_EXT}" pull "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies.xml" -p ${PACKMAN_PLATFORM}
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 		RESULT_VARIABLE PACKMAN_RESULT)
@@ -245,10 +249,14 @@ endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${COMPILE_DEFINITIONS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE NRI_Shared NRI_VK NRI_Validation)
 if(WIN32)
+	target_link_libraries(${PROJECT_NAME} PRIVATE NRI_Shared NRI_VK NRI_Validation)
     target_link_libraries(${PROJECT_NAME} PRIVATE NRI_D3D11 NRI_D3D12)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Android")
+	target_link_libraries(${PROJECT_NAME} PRIVATE NRI_Shared NRI_VK NRI_Validation)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 elseif(UNIX)
+	target_link_libraries(${PROJECT_NAME} PRIVATE NRI_Shared NRI_VK NRI_Validation)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 

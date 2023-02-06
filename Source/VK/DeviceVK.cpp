@@ -2227,7 +2227,9 @@ Result DeviceVK::ResolveDispatchTable()
 
     if (m_IsBufferDeviceAddressSupported)
     {
-        RESOLVE_DEVICE_FUNCTION(GetBufferDeviceAddress);
+		RESOLVE_OPTIONAL_DEVICE_FUNCTION(GetBufferDeviceAddressKHR);
+		if (m_VK.GetBufferDeviceAddressKHR == nullptr)
+			m_IsBufferDeviceAddressSupported = false;
     }
 
     if (m_IsMeshShaderExtSupported)
