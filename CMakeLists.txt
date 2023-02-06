@@ -117,7 +117,7 @@ endif()
 
 # Compile options
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(COMPILE_OPTIONS -Wextra)
+    set(COMPILE_OPTIONS -Wextra -Wno-missing-field-initializers)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(COMPILE_OPTIONS -Wextra)
 elseif(MSVC)
