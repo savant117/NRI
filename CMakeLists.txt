@@ -23,8 +23,8 @@ set(VERSION_MINOR ${CMAKE_MATCH_1})
 message("NRI v${VERSION_MAJOR}.${VERSION_MINOR}")
 project(NRI LANGUAGES C CXX)
 
-# Run packman if not on android
-if(NOT (CMAKE_SYSTEM_NAME MATCHES "Android"))
+# Run packman if windows
+if(WIN32)
 	# Download dependencies using Packman
 	if(WIN32)
 		set(PACKMAN_EXT ".cmd")
@@ -110,7 +110,7 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 elseif(NOT (CMAKE_SYSTEM_NAME MATCHES "Android"))
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+    #set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
 endif()

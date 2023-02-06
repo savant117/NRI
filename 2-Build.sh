@@ -2,8 +2,8 @@
 
 mkdir -p "_Compiler"
 
-cd "_Compiler"
-cmake ..
-cmake --build . --config Release
+cd "_Compiler/Debug"
 cmake --build . --config Debug
-cd ..
+cd "../Release"
+cmake --build . --config Release
+cd ../..
