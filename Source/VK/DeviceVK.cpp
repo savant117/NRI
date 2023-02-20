@@ -2206,9 +2206,13 @@ Result DeviceVK::ResolveDispatchTable()
 
     if (m_IsDebugUtilsSupported)
     {
-        RESOLVE_DEVICE_FUNCTION(SetDebugUtilsObjectNameEXT);
-        RESOLVE_DEVICE_FUNCTION(CmdBeginDebugUtilsLabelEXT);
-        RESOLVE_DEVICE_FUNCTION(CmdEndDebugUtilsLabelEXT);
+        RESOLVE_OPTIONAL_DEVICE_FUNCTION(SetDebugUtilsObjectNameEXT);
+        RESOLVE_OPTIONAL_DEVICE_FUNCTION(CmdBeginDebugUtilsLabelEXT);
+        RESOLVE_OPTIONAL_DEVICE_FUNCTION(CmdEndDebugUtilsLabelEXT);
+        m_IsDebugUtilsSupported = 
+            m_VK.SetDebugUtilsObjectNameEXT != nullptr &&
+            m_VK.CmdBeginDebugUtilsLabelEXT != nullptr &&
+            m_VK.CmdEndDebugUtilsLabelEXT != nullptr;
     }
 
     if (m_IsRayTracingExtSupported)
@@ -2228,8 +2232,7 @@ Result DeviceVK::ResolveDispatchTable()
     if (m_IsBufferDeviceAddressSupported)
     {
 		RESOLVE_OPTIONAL_DEVICE_FUNCTION(GetBufferDeviceAddressKHR);
-		if (m_VK.GetBufferDeviceAddressKHR == nullptr)
-			m_IsBufferDeviceAddressSupported = false;
+        m_IsBufferDeviceAddressSupported = m_VK.GetBufferDeviceAddressKHR != nullptr;
     }
 
     if (m_IsMeshShaderExtSupported)
