@@ -362,80 +362,6 @@ NRIC_API uint32_t NRI_CALL nri_ConvertNRIFormatToVK(uint8_t format)
     return nri::ConvertNRIFormatToVK((Format)format);
 }
 
-#ifdef _WIN32
-
-#include <dxgi.h>
-
-int SortAdaptersByDedicatedVideoMemorySize(const void* a, const void* b)
-{
-    DXGI_ADAPTER_DESC1 ad, bd;
-    (*(IDXGIAdapter1**)a)->GetDesc1(&ad);
-    (*(IDXGIAdapter1**)b)->GetDesc1(&bd);
-
-    if (ad.DedicatedVideoMemory > bd.DedicatedVideoMemory)
-        return -1;
-
-    if (ad.DedicatedVideoMemory < bd.DedicatedVideoMemory)
-        return 1;
-
-    return 0;
-}
-
-NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDeviceGroups, uint32_t& physicalDeviceGroupNum)
-{
-    IDXGIFactory1* factory = NULL;
-    if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory)))
-        return Result::UNSUPPORTED;
-
-    uint32_t adaptersNum = 0;
-    IDXGIAdapter1* adapters[32];
-
-    for (uint32_t i = 0; ; i++)
-    {
-        IDXGIAdapter1* adapter;
-        HRESULT hr = factory->EnumAdapters1(i, &adapter);
-        if (hr == DXGI_ERROR_NOT_FOUND)
-            break;
-
-        DXGI_ADAPTER_DESC1 desc;
-        if (adapter->GetDesc1(&desc) == S_OK)
-        {
-            if (desc.Flags == DXGI_ADAPTER_FLAG_NONE)
-                adapters[adaptersNum++] = adapter;
-        }
-    }
-
-    factory->Release();
-
-    if (!adaptersNum)
-        return Result::FAILURE;
-
-    if (physicalDeviceGroups)
-    {
-        qsort(adapters, adaptersNum, sizeof(adapters[0]), SortAdaptersByDedicatedVideoMemorySize);
-
-        for (uint32_t i = 0; i < physicalDeviceGroupNum; i++)
-        {
-            DXGI_ADAPTER_DESC1 desc;
-            adapters[i]->GetDesc1(&desc);
-
-            PhysicalDeviceGroup& group = physicalDeviceGroups[i];
-            memset(&group, 0 ,sizeof(group));
-            wcscpy(group.description, desc.Description);
-            group.luid = *(uint64_t*)&desc.AdapterLuid;
-            group.dedicatedVideoMemory = desc.DedicatedVideoMemory;
-            group.deviceID = desc.DeviceId;
-            group.vendor = GetVendorFromID(desc.VendorId);
-        }
-    }
-    else
-        physicalDeviceGroupNum = adaptersNum;
-
-    return Result::SUCCESS;
-}
-
-#else
-
 #include <vulkan/vulkan.h>
 
 #define GET_VK_FUNCTION(instance, name) \
@@ -443,7 +369,7 @@ NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDev
     if (name == nullptr) \
         return Result::UNSUPPORTED;
 
-int SortAdaptersByDedicatedVideoMemorySize(const void* pa, const void* pb)
+int SortAdaptersByDedicatedVideoMemorySizeVK(const void* pa, const void* pb)
 {
     PhysicalDeviceGroup* a = (PhysicalDeviceGroup*)pa;
     PhysicalDeviceGroup* b = (PhysicalDeviceGroup*)pb;
@@ -457,7 +383,7 @@ int SortAdaptersByDedicatedVideoMemorySize(const void* pa, const void* pb)
     return 0;
 }
 
-NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDeviceGroups, uint32_t& physicalDeviceGroupNum)
+Result GetPhysicalDevicesVK(PhysicalDeviceGroup* physicalDeviceGroups, uint32_t& physicalDeviceGroupNum)
 {
     Library* loader = LoadSharedLibrary(VULKAN_LOADER_NAME);
     if (!loader)
@@ -529,6 +455,8 @@ NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDev
                     group.luid = *(uint64_t*)&deviceIDProperties.deviceLUID[0];
                     group.deviceID = properties2.properties.deviceID;
                     group.vendor = GetVendorFromID(properties2.properties.vendorID);
+                    group.softwareAdapter = properties2.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
+                    group.supportedAPI[(int)GraphicsAPI::VULKAN] = true;
 
                     if (properties2.properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
                     {
@@ -552,7 +480,7 @@ NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDev
                 }
 
                 // Sort by dedicated video memory
-                qsort(physicalDeviceGroupsSorted, deviceGroupNum, sizeof(physicalDeviceGroupsSorted[0]), SortAdaptersByDedicatedVideoMemorySize);
+                qsort(physicalDeviceGroupsSorted, deviceGroupNum, sizeof(physicalDeviceGroupsSorted[0]), SortAdaptersByDedicatedVideoMemorySizeVK);
 
                 // Copy to output
                 for (uint32_t i = 0; i < physicalDeviceGroupNum; i++)
@@ -571,6 +499,123 @@ NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDev
     UnloadSharedLibrary(*loader);
 
     return nriResult;
+}
+
+
+#ifdef _WIN32
+
+#include <dxgi.h>
+#include <d3d11.h>
+#include <d3d12.h>
+
+int SortAdaptersByDedicatedVideoMemorySizeDX(const void* a, const void* b)
+{
+    DXGI_ADAPTER_DESC1 ad, bd;
+    (*(IDXGIAdapter1**)a)->GetDesc1(&ad);
+    (*(IDXGIAdapter1**)b)->GetDesc1(&bd);
+
+    if (ad.DedicatedVideoMemory > bd.DedicatedVideoMemory)
+        return -1;
+
+    if (ad.DedicatedVideoMemory < bd.DedicatedVideoMemory)
+        return 1;
+
+    return 0;
+}
+
+NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDeviceGroups, uint32_t& physicalDeviceGroupNum)
+{
+    IDXGIFactory1* factory = NULL;
+    if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory)))
+        return Result::UNSUPPORTED;
+
+    uint32_t adaptersNum = 0;
+    IDXGIAdapter1* adapters[32];
+
+    for (uint32_t i = 0; ; i++)
+    {
+        IDXGIAdapter1* adapter;
+        HRESULT hr = factory->EnumAdapters1(i, &adapter);
+        if (hr == DXGI_ERROR_NOT_FOUND)
+            break;
+
+        DXGI_ADAPTER_DESC1 desc;
+        if (adapter->GetDesc1(&desc) == S_OK)
+        {
+            if (desc.Flags == DXGI_ADAPTER_FLAG_NONE || desc.Flags == DXGI_ADAPTER_FLAG_SOFTWARE)
+                adapters[adaptersNum++] = adapter;
+        }
+    }
+
+    factory->Release();
+
+    if (!adaptersNum)
+        return GetPhysicalDevicesVK(physicalDeviceGroups, physicalDeviceGroupNum);
+
+    if (physicalDeviceGroups)
+    {
+        qsort(adapters, adaptersNum, sizeof(adapters[0]), SortAdaptersByDedicatedVideoMemorySizeDX);
+
+        for (uint32_t i = 0; i < physicalDeviceGroupNum; i++)
+        {
+            DXGI_ADAPTER_DESC1 desc;
+            adapters[i]->GetDesc1(&desc);
+
+            PhysicalDeviceGroup& group = physicalDeviceGroups[i];
+            memset(&group, 0, sizeof(group));
+            wcscpy(group.description, desc.Description);
+            group.luid = *(uint64_t*)&desc.AdapterLuid;
+            group.dedicatedVideoMemory = desc.DedicatedVideoMemory;
+            group.deviceID = desc.DeviceId;
+            group.vendor = GetVendorFromID(desc.VendorId);
+            group.softwareAdapter = desc.Flags == DXGI_ADAPTER_FLAG_SOFTWARE;
+
+            // Check DX11 support 
+            {
+                D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
+                D3D_FEATURE_LEVEL featureLevel;
+                HRESULT hr = D3D11CreateDevice(adapters[i], D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, featureLevels, 2, D3D11_SDK_VERSION, NULL, &featureLevel, NULL);
+                group.supportedAPI[(int)GraphicsAPI::D3D11] = SUCCEEDED(hr);
+            }
+
+            // Check DX12 support
+            {
+                HRESULT hr = D3D12CreateDevice(adapters[i], D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr);
+                group.supportedAPI[(int)GraphicsAPI::D3D12] = SUCCEEDED(hr);
+            }
+        }
+
+        // Check vulkan support
+        PhysicalDeviceGroup physicalDeviceGroupsVK[32];
+        uint32_t physicalDeviceGroupNumVK;
+        if (GetPhysicalDevicesVK(nullptr, physicalDeviceGroupNumVK) == Result::SUCCESS)
+        {
+            if (GetPhysicalDevicesVK(physicalDeviceGroupsVK, physicalDeviceGroupNumVK) == Result::SUCCESS)
+            {
+                for (uint32_t i = 0; i < physicalDeviceGroupNumVK; i++)
+                {
+                    for (uint32_t j = 0; j < physicalDeviceGroupNum; j++)
+                    {
+                        if (physicalDeviceGroups[i].luid == physicalDeviceGroupsVK[j].luid)
+                        {
+                            physicalDeviceGroups[j].supportedAPI[(int)GraphicsAPI::VULKAN] = physicalDeviceGroupsVK[i].supportedAPI[(int)GraphicsAPI::VULKAN];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+        physicalDeviceGroupNum = adaptersNum;
+
+    return Result::SUCCESS;
+}
+
+#else
+
+NRI_API Result NRI_CALL nri::GetPhysicalDevices(PhysicalDeviceGroup* physicalDeviceGroups, uint32_t& physicalDeviceGroupNum)
+{
+    return GetPhysicalDevicesVK(physicalDeviceGroups, physicalDeviceGroupNum);
 }
 
 #endif

@@ -44,6 +44,8 @@ NRI_STRUCT(PhysicalDeviceGroup)
     uint64_t luid;
     uint64_t dedicatedVideoMemory;
     uint32_t deviceID;
+    bool supportedAPI[(int)GraphicsAPI::MAX_NUM];
+    bool softwareAdapter;
     NRI_NAME(Vendor) vendor;
 };
 
