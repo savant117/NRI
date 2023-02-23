@@ -42,6 +42,7 @@ DeviceD3D11::DeviceD3D11(const Log& log, StdAllocator<uint8_t>& stdAllocator) :
 DeviceD3D11::~DeviceD3D11()
 {
     DeleteCriticalSection(&m_CriticalSection);
+    m_Device->Release();
 }
 
 bool DeviceD3D11::GetOutput(Display* display, ComPtr<IDXGIOutput>& output) const
