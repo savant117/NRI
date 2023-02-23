@@ -1271,21 +1271,25 @@ Result DeviceVK::CreateInstance(const DeviceCreationDesc& deviceCreationDesc)
         Func vkCreateDebugUtilsMessengerEXT = nullptr;
         vkCreateDebugUtilsMessengerEXT = (Func)m_VK.GetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
 
-        VkDebugUtilsMessengerCreateInfoEXT createInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
+        // TODO why doesn't this work on android?
+        if (vkCreateDebugUtilsMessengerEXT != nullptr)
+        {
+            VkDebugUtilsMessengerCreateInfoEXT createInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
 
-        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-        createInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+            createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+            createInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
-        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-        createInfo.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+            createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+            createInfo.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
-        createInfo.pUserData = this;
-        createInfo.pfnUserCallback = DebugUtilsMessenger;
+            createInfo.pUserData = this;
+            createInfo.pfnUserCallback = DebugUtilsMessenger;
 
-        result = vkCreateDebugUtilsMessengerEXT(m_Instance, &createInfo, m_AllocationCallbackPtr, &m_Messenger);
+            result = vkCreateDebugUtilsMessengerEXT(m_Instance, &createInfo, m_AllocationCallbackPtr, &m_Messenger);
 
-        RETURN_ON_FAILURE(GetLog(), result == VK_SUCCESS, GetReturnCode(result),
-            "Can't create a debug utils messenger callback: vkCreateDebugUtilsMessengerEXT returned %d.", (int32_t)result);
+            RETURN_ON_FAILURE(GetLog(), result == VK_SUCCESS, GetReturnCode(result),
+                "Can't create a debug utils messenger callback: vkCreateDebugUtilsMessengerEXT returned %d.", (int32_t)result);
+        }
     }
 
     return Result::SUCCESS;
@@ -2003,6 +2007,9 @@ void DeviceVK::ReportDeviceGroupInfo()
 #define RESOLVE_OPTIONAL_DEVICE_FUNCTION( name ) \
     m_VK.name = (PFN_vk ## name)m_VK.GetDeviceProcAddr(m_Device, "vk" #name)
 
+#define RESOLVE_OPTIONAL_DEVICE_FUNCTION_WITH_OTHER_NAME( name, otherName ) \
+    m_VK.name = (PFN_vk ## name)m_VK.GetDeviceProcAddr(m_Device, "vk" #otherName)
+
 #define RESOLVE_DEVICE_FUNCTION( name ) \
     RESOLVE_OPTIONAL_DEVICE_FUNCTION(name); \
     if (m_VK.name == nullptr) \
@@ -2231,8 +2238,14 @@ Result DeviceVK::ResolveDispatchTable()
 
     if (m_IsBufferDeviceAddressSupported)
     {
-		RESOLVE_OPTIONAL_DEVICE_FUNCTION(GetBufferDeviceAddressKHR);
-        m_IsBufferDeviceAddressSupported = m_VK.GetBufferDeviceAddressKHR != nullptr;
+        RESOLVE_OPTIONAL_DEVICE_FUNCTION(GetBufferDeviceAddress);
+        if (m_VK.GetBufferDeviceAddress == nullptr)
+            RESOLVE_OPTIONAL_DEVICE_FUNCTION_WITH_OTHER_NAME(GetBufferDeviceAddress, GetBufferDeviceAddressKHR);
+        if (m_VK.GetBufferDeviceAddress == nullptr)
+            RESOLVE_OPTIONAL_DEVICE_FUNCTION_WITH_OTHER_NAME(GetBufferDeviceAddress, GetBufferDeviceAddressEXT);
+        if (m_VK.GetBufferDeviceAddress == nullptr)
+			RESOLVE_OPTIONAL_DEVICE_FUNCTION_WITH_OTHER_NAME(GetBufferDeviceAddress, GetBufferDeviceAddressNV);
+        m_IsBufferDeviceAddressSupported = m_VK.GetBufferDeviceAddress != nullptr;
     }
 
     if (m_IsMeshShaderExtSupported)

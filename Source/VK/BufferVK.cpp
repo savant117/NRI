@@ -118,7 +118,7 @@ void BufferVK::ReadDeviceAddress()
 
     const auto& vk = m_Device.GetDispatchTable();
 
-    if (vk.GetBufferDeviceAddressKHR == nullptr)
+    if (vk.GetBufferDeviceAddress == nullptr)
         return;
 
     for (uint32_t i = 0; i < m_Device.GetPhysicalDeviceGroupSize(); i++)
@@ -126,7 +126,7 @@ void BufferVK::ReadDeviceAddress()
         if (m_Handles[i] != VK_NULL_HANDLE)
         {
             bufferDeviceAddressInfo.buffer = m_Handles[i];
-            m_DeviceAddresses[i] = vk.GetBufferDeviceAddressKHR(m_Device, &bufferDeviceAddressInfo);
+            m_DeviceAddresses[i] = vk.GetBufferDeviceAddress(m_Device, &bufferDeviceAddressInfo);
         }
     }
 }
