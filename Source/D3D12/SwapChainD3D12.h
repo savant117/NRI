@@ -36,6 +36,7 @@ namespace nri
         Texture* const* GetTextures(uint32_t& textureNum, Format& format) const;
         uint32_t AcquireNextTexture(QueueSemaphore& textureReadyForRender);
         Result Present(QueueSemaphore& textureReadyForPresent);
+        Result Resize(uint16_t width, uint16_t height);
         Result SetHdrMetadata(const HdrMetadata& hdrMetadata);
 
     private:

@@ -197,6 +197,39 @@ inline uint32_t SwapChainD3D12::AcquireNextTexture(QueueSemaphore& textureReadyF
     return m_SwapChain->GetCurrentBackBufferIndex();
 }
 
+inline Result SwapChainD3D12::Resize(uint16_t width, uint16_t height)
+{
+    m_TexturePointer.clear();
+    m_Textures.clear();
+
+    HRESULT result = m_SwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, m_IsTearingAllowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0);
+
+    RETURN_ON_BAD_HRESULT(m_Device.GetLog(), result, "Can't resize the swapchain: IDXGISwapChain::ResizeBuffers() returned %d.", (int32_t)result);
+
+    m_SwapChainDesc.width = width;
+    m_SwapChainDesc.height = height;
+
+    for (uint32_t i = 0; i < m_SwapChainDesc.textureNum; i++)
+    {
+        ComPtr<ID3D12Resource> resource;
+        result = m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
+        if (FAILED(result))
+        {
+            REPORT_ERROR(m_Device.GetLog(), "IDXGISwapChain4::GetBuffer() failed, error code: 0x%X.", result);
+            return Result::FAILURE;
+        }
+
+        m_Textures.emplace_back(m_Device);
+        m_Textures[i].Initialize(resource);
+    }
+
+    m_TexturePointer.resize(m_SwapChainDesc.textureNum);
+    for (uint32_t i = 0; i < m_SwapChainDesc.textureNum; i++)
+        m_TexturePointer[i] = (Texture*)&m_Textures[i];
+
+    return Result::SUCCESS;
+}
+
 inline Result SwapChainD3D12::Present(QueueSemaphore& textureReadyForPresent)
 {
     ((QueueSemaphoreD3D12&)textureReadyForPresent).Wait(m_CommandQueue);

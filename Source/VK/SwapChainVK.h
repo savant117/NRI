@@ -28,11 +28,13 @@ namespace nri
         Texture* const* GetTextures(uint32_t& textureNum, Format& format) const;
         uint32_t AcquireNextTexture(QueueSemaphore& textureReadyForRender);
         Result Present(QueueSemaphore& textureReadyForPresent);
+        Result Resize(uint16_t width, uint16_t height);
         Result SetHdrMetadata(const HdrMetadata& hdrMetadata);
 
     private:
         Result CreateSurface(const SwapChainDesc& swapChainDesc);
 
+        SwapChainDesc m_Desc = {};
         VkSwapchainKHR m_Handle = VK_NULL_HANDLE;
         const CommandQueueVK* m_CommandQueue = nullptr;
         uint32_t m_TextureIndex = std::numeric_limits<uint32_t>::max();

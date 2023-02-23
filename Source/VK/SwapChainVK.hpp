@@ -32,6 +32,11 @@ static Result NRI_CALL SwapChainPresent(SwapChain& swapChain, QueueSemaphore& te
     return ((SwapChainVK&)swapChain).Present(textureReadyForPresent);
 }
 
+static Result NRI_CALL SwapChainResize(SwapChain& swapChain, uint16_t width, uint16_t height)
+{
+    return ((SwapChainVK&)swapChain).Resize(width, height);
+}
+
 static Result NRI_CALL SetSwapChainHdrMetadata(SwapChain& swapChain, const HdrMetadata& hdrMetadata)
 {
     return ((SwapChainVK&)swapChain).SetHdrMetadata(hdrMetadata);
@@ -43,6 +48,7 @@ void FillFunctionTableSwapChainVK(SwapChainInterface& swapChainInterface)
     swapChainInterface.GetSwapChainTextures = ::GetSwapChainTextures;
     swapChainInterface.AcquireNextSwapChainTexture = ::AcquireNextSwapChainTexture;
     swapChainInterface.SwapChainPresent = ::SwapChainPresent;
+    swapChainInterface.SwapChainResize = ::SwapChainResize;
     swapChainInterface.SetSwapChainHdrMetadata = ::SetSwapChainHdrMetadata;
 }
 

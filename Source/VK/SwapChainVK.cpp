@@ -254,6 +254,8 @@ Result SwapChainVK::Create(const SwapChainDesc& swapChainDesc)
         m_Textures[i] = texture;
     }
 
+    m_Desc = swapChainDesc;
+
     return Result::SUCCESS;
 }
 
@@ -283,6 +285,15 @@ inline uint32_t SwapChainVK::AcquireNextTexture(QueueSemaphore& textureReadyForR
         "Can't acquire the next texture of the swapchain: vkAcquireNextImageKHR returned %d.", (int32_t)result);
 
     return m_TextureIndex;
+}
+
+inline Result SwapChainVK::Resize(uint16_t width, uint16_t height)
+{
+    this->~SwapChainVK();
+    auto desc = m_Desc;
+    desc.width = width;
+    desc.height = height;
+    return Create(desc);
 }
 
 inline Result SwapChainVK::Present(QueueSemaphore& textureReadyForPresent)

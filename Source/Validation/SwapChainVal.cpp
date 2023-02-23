@@ -78,6 +78,11 @@ inline Result SwapChainVal::Present(QueueSemaphore& textureReadyForPresent)
     return m_SwapChainAPI.SwapChainPresent(m_ImplObject, *queueSemaphoreImpl);
 }
 
+inline Result SwapChainVal::Resize(uint16_t width, uint16_t height)
+{
+    return m_SwapChainAPI.SwapChainResize(m_ImplObject, width, height);
+}
+
 inline Result SwapChainVal::SetHdrMetadata(const HdrMetadata& hdrMetadata)
 {
     return m_SwapChainAPI.SetSwapChainHdrMetadata(m_ImplObject, hdrMetadata);

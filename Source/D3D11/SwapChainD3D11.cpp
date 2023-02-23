@@ -258,6 +258,39 @@ inline Result SwapChainD3D11::Present(QueueSemaphore& textureReadyForPresent)
     return Result::SUCCESS;
 }
 
+inline Result SwapChainD3D11::Resize(uint16_t width, uint16_t height)
+{
+    m_RenderTargetPointers.clear();
+    m_RenderTargets.clear();
+
+    HRESULT result = m_SwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, m_IsTearingAllowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0);
+
+    RETURN_ON_BAD_HRESULT(m_Device.GetLog(), result, "Can't resize the swapchain: IDXGISwapChain::ResizeBuffers() returned %d.", (int32_t)result);
+
+    m_SwapChainDesc.width = width;
+    m_SwapChainDesc.height = height;
+
+    const uint32_t bufferCount = 1;
+
+    m_RenderTargets.resize(bufferCount);
+    m_RenderTargetPointers.clear();
+
+    for (uint32_t i = 0; i < bufferCount; i++)
+    {
+        ComPtr<ID3D11Texture2D> backBuffer;
+        result = m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
+        RETURN_ON_BAD_HRESULT(m_Device.GetLog(), result, "IDXGISwapChain::GetBuffer() - FAILED!");
+
+        TextureD3D11Desc textureDesc = {};
+        textureDesc.d3d11Resource = backBuffer;
+        m_RenderTargets[i].Create(m_Device, textureDesc);
+
+        m_RenderTargetPointers.push_back((Texture*)&m_RenderTargets[i]);
+    }
+
+    return Result::SUCCESS;
+}
+
 inline Result SwapChainD3D11::SetHdrMetadata(const HdrMetadata& hdrMetadata)
 {
     if (m_SwapChain.version < 4)
