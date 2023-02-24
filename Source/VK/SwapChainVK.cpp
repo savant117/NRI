@@ -17,6 +17,24 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 using namespace nri;
 
+static std::array<VkFormat, 5> g_SwapChainFormats =
+{
+    VK_FORMAT_B8G8R8A8_SRGB,                      // BT709_G10_8BIT,
+    VK_FORMAT_R16G16B16A16_SFLOAT,                // BT709_G10_16BIT,
+    VK_FORMAT_B8G8R8A8_UNORM,                     // BT709_G22_8BIT,
+    VK_FORMAT_A2B10G10R10_UNORM_PACK32,           // BT709_G22_10BIT,
+    VK_FORMAT_A2B10G10R10_UNORM_PACK32,           // BT2020_G2084_10BIT
+};
+
+static std::array<VkColorSpaceKHR, 5> g_SwapChainColorSpaces =
+{
+    VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,              // BT709_G10_8BIT,
+    VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT,        // BT709_G10_16BIT,
+    VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,              // BT709_G22_8BIT,
+    VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,              // BT709_G22_10BIT,
+    VK_COLOR_SPACE_HDR10_ST2084_EXT,                // BT2020_G2084_10BIT
+};
+
 SwapChainVK::SwapChainVK(DeviceVK& device) :
     m_Textures(device.GetStdAllocator()),
     m_Device(device)
@@ -178,9 +196,19 @@ Result SwapChainVK::Create(const SwapChainDesc& swapChainDesc)
     RETURN_ON_FAILURE(m_Device.GetLog(), result == VK_SUCCESS, GetReturnCode(result),
         "Can't get physical device surface formats: vkGetPhysicalDeviceSurfaceFormatsKHR returned %d.", (int32_t)result);
 
-    VkSurfaceFormatKHR surfaceFormat = {};
+    VkSurfaceFormatKHR surfaceFormat = surfaceFormats[0];
 
-    surfaceFormat = surfaceFormats[0];
+    // Find desired surface format
+    for (uint32_t i = 0; i < formatNum; i++)
+    {
+        if (surfaceFormats[i].format == g_SwapChainFormats[(int)swapChainDesc.format] &&
+            surfaceFormats[i].colorSpace == g_SwapChainColorSpaces[(int)swapChainDesc.format])
+        {
+			surfaceFormat = surfaceFormats[i];
+			break;
+		}
+    }
+
     m_Format = VKFormatToNRIFormat(surfaceFormat.format);
 
     uint32_t presentModeNum = 0;
