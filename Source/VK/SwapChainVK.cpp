@@ -52,6 +52,11 @@ SwapChainVK::SwapChainVK(DeviceVK& device) :
 
 SwapChainVK::~SwapChainVK()
 {
+    Cleanup();
+}
+
+void SwapChainVK::Cleanup()
+{
     const auto& vk = m_Device.GetDispatchTable();
 
     for (size_t i = 0; i < m_Textures.size(); i++)
@@ -327,10 +332,12 @@ inline uint32_t SwapChainVK::AcquireNextTexture(QueueSemaphore& textureReadyForR
 
 inline Result SwapChainVK::Resize(uint16_t width, uint16_t height)
 {
-    this->~SwapChainVK();
+    Cleanup();
+
     auto desc = m_Desc;
     desc.width = width;
     desc.height = height;
+
     return Create(desc);
 }
 
@@ -353,6 +360,9 @@ inline Result SwapChainVK::Present(QueueSemaphore& textureReadyForPresent)
 
     const auto& vk = m_Device.GetDispatchTable();
     const VkResult result = vk.QueuePresentKHR(*m_CommandQueue, &info);
+
+    if (result == VkResult::VK_SUBOPTIMAL_KHR)
+        return Result::SWAPCHAIN_RESIZE;
 
     RETURN_ON_FAILURE(m_Device.GetLog(), result == VK_SUCCESS, GetReturnCode(result),
         "Can't present the swapchain: vkQueuePresentKHR returned %d.", (int32_t)result);

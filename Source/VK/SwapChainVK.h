@@ -33,6 +33,7 @@ namespace nri
 
     private:
         Result CreateSurface(const SwapChainDesc& swapChainDesc);
+        void Cleanup();
 
         SwapChainDesc m_Desc = {};
         VkSwapchainKHR m_Handle = VK_NULL_HANDLE;
