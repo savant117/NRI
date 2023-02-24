@@ -1230,6 +1230,7 @@ Result DeviceVK::CreateInstance(const DeviceCreationDesc& deviceCreationDesc)
     }
 
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    extensions.push_back(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME);
 
     if (deviceCreationDesc.enableAPIValidation)
         layers.push_back("VK_LAYER_KHRONOS_validation");

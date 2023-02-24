@@ -26,6 +26,15 @@ static std::array<VkFormat, 5> g_SwapChainFormats =
     VK_FORMAT_A2B10G10R10_UNORM_PACK32,           // BT2020_G2084_10BIT
 };
 
+static std::array<VkFormat, 5> g_SwapChainAltFormats =
+{
+    VK_FORMAT_R8G8B8A8_SRGB,                      // BT709_G10_8BIT,
+    VK_FORMAT_R16G16B16A16_SFLOAT,                // BT709_G10_16BIT,
+    VK_FORMAT_R8G8B8A8_UNORM,                     // BT709_G22_8BIT,
+    VK_FORMAT_A2R10G10B10_UNORM_PACK32,           // BT709_G22_10BIT,
+    VK_FORMAT_A2R10G10B10_UNORM_PACK32,           // BT2020_G2084_10BIT
+};
+
 static std::array<VkColorSpaceKHR, 5> g_SwapChainColorSpaces =
 {
     VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,              // BT709_G10_8BIT,
@@ -201,7 +210,8 @@ Result SwapChainVK::Create(const SwapChainDesc& swapChainDesc)
     // Find desired surface format
     for (uint32_t i = 0; i < formatNum; i++)
     {
-        if (surfaceFormats[i].format == g_SwapChainFormats[(int)swapChainDesc.format] &&
+        if ((surfaceFormats[i].format == g_SwapChainFormats[(int)swapChainDesc.format] ||
+            surfaceFormats[i].format == g_SwapChainAltFormats[(int)swapChainDesc.format]) &&
             surfaceFormats[i].colorSpace == g_SwapChainColorSpaces[(int)swapChainDesc.format])
         {
 			surfaceFormat = surfaceFormats[i];
