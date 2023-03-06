@@ -24,7 +24,7 @@ namespace nri
 #if NRI_USE_D3D12
         TextureVal(DeviceVal& device, Texture& texture, const TextureD3D12Desc& textureD3D12Desc);
 #endif
-#if NRI_USE_VK
+#if NRI_USE_VULKAN
         TextureVal(DeviceVal& device, Texture& texture, const TextureVulkanDesc& textureVulkanDesc);
 #endif
 

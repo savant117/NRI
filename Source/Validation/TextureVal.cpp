@@ -17,7 +17,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 using namespace nri;
 
-#if NRI_USE_VK
+#if NRI_USE_VULKAN
 TextureType GetTextureTypeVK(uint32_t vkImageType);
 #endif
 
@@ -47,7 +47,7 @@ TextureVal::TextureVal(DeviceVal& device, Texture& texture, const TextureD3D12De
 }
 #endif
 
-#if NRI_USE_VK
+#if NRI_USE_VULKAN
 TextureVal::TextureVal(DeviceVal& device, Texture& texture, const TextureVulkanDesc& textureVulkanDesc) :
     DeviceObjectVal(device, texture)
 {
