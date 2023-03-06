@@ -111,11 +111,19 @@ Result SwapChainD3D12::Create(const SwapChainDesc& swapChainDesc)
     swapChainDesc1.Scaling = DXGI_SCALING_NONE;
 
     ComPtr<IDXGISwapChain1> swapChain;
-    hr = factory->CreateSwapChainForHwnd((ID3D12CommandQueue*)commandQueueD3D12, window, &swapChainDesc1, nullptr, nullptr, &swapChain);
+    if (swapChainDesc.windowSystemType == nri::WindowSystemType::WINDOWS)
+        hr = factory->CreateSwapChainForHwnd((ID3D12CommandQueue*)commandQueueD3D12, window, &swapChainDesc1, nullptr, nullptr, &swapChain);
+    else if (swapChainDesc.windowSystemType == nri::WindowSystemType::UNIVERSAL)
+		hr = factory->CreateSwapChainForCoreWindow((ID3D12CommandQueue*)commandQueueD3D12, (IUnknown*)swapChainDesc.window.uwp.coreWindow, &swapChainDesc1, nullptr, &swapChain);
+	else
+		return Result::INVALID_ARGUMENT;
     RETURN_ON_BAD_HRESULT(m_Device.GetLog(), hr, "IDXGIFactory2::CreateSwapChainForHwnd() failed, error code: 0x%X.", hr);
 
-    hr = factory->MakeWindowAssociation(window, DXGI_MWA_NO_ALT_ENTER);
-    RETURN_ON_BAD_HRESULT(m_Device.GetLog(), hr, "CreateSwapChainForHwnd::MakeWindowAssociation() failed, error code: 0x%X.", hr);
+    if (swapChainDesc.windowSystemType == nri::WindowSystemType::WINDOWS)
+    {
+        hr = factory->MakeWindowAssociation(window, DXGI_MWA_NO_ALT_ENTER);
+        RETURN_ON_BAD_HRESULT(m_Device.GetLog(), hr, "CreateSwapChainForHwnd::MakeWindowAssociation() failed, error code: 0x%X.", hr);
+    }
 
     hr = swapChain->QueryInterface(IID_PPV_ARGS(&m_SwapChain));
     RETURN_ON_BAD_HRESULT(m_Device.GetLog(), hr, "IDXGISwapChain1::QueryInterface() failed, error code: 0x%X.", hr);

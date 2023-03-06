@@ -17,9 +17,17 @@ namespace nri
     struct TextureVal : public DeviceObjectVal<Texture>
     {
         TextureVal(DeviceVal& device, Texture& texture, const TextureDesc& textureDesc);
+
+#if NRI_USE_D3D11
         TextureVal(DeviceVal& device, Texture& texture, const TextureD3D11Desc& textureD3D11Desc);
+#endif
+#if NRI_USE_D3D12
         TextureVal(DeviceVal& device, Texture& texture, const TextureD3D12Desc& textureD3D12Desc);
+#endif
+#if NRI_USE_VK
         TextureVal(DeviceVal& device, Texture& texture, const TextureVulkanDesc& textureVulkanDesc);
+#endif
+
         ~TextureVal();
 
         inline const TextureDesc& GetDesc() const

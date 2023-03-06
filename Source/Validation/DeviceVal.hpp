@@ -548,6 +548,7 @@ Result DeviceVal::FillFunctionTable(WrapperVKInterface& wrapperVKInterface) cons
     return ValidateFunctionTable(GetLog(), wrapperVKInterface);
 
 #else
+    wrapperVKInterface;
     return Result::UNSUPPORTED;
 #endif
 }

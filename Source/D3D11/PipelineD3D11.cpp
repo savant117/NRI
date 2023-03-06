@@ -27,7 +27,6 @@ PipelineD3D11::PipelineD3D11(DeviceD3D11& device, const VersionedDevice* version
 
 PipelineD3D11::~PipelineD3D11()
 {
-    Deallocate(m_Device.GetStdAllocator(), m_RasterizerStateExDesc);
 }
 
 Result PipelineD3D11::Create(const GraphicsPipelineDesc& pipelineDesc)
@@ -151,13 +150,6 @@ Result PipelineD3D11::Create(const GraphicsPipelineDesc& pipelineDesc)
         RETURN_ON_BAD_HRESULT(m_Device.GetLog(), hr, "ID3D11Device::CreateRasterizerState() - FAILED!");
     }
 
-    m_RasterizerStateExDesc = Allocate<NvAPI_D3D11_RASTERIZER_DESC_EX>(m_Device.GetStdAllocator());
-    memset(m_RasterizerStateExDesc, 0, sizeof(*m_RasterizerStateExDesc));
-    memcpy(m_RasterizerStateExDesc, &rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-    m_RasterizerStateExDesc->ConservativeRasterEnable = rs.conservativeRasterization;
-    m_RasterizerStateExDesc->ProgrammableSamplePositionsEnable = true;
-    m_RasterizerStateExDesc->SampleCount = rs.sampleNum;
-
     m_RasterizerStates.push_back(rasterizerState);
     m_RasterizerState = rasterizerState.ptr;
 
@@ -278,21 +270,7 @@ void PipelineD3D11::ChangeSamplePositions(const VersionedContext& context, const
         RasterizerState newState = {};
         newState.samplePositionHash = samplePositionState.positionHash;
 
-        m_RasterizerStateExDesc->InterleavedSamplingEnable = samplePositionState.positionNum > m_RasterizerStateExDesc->SampleCount;
-        for (uint32_t j = 0; j < samplePositionState.positionNum; j++)
-        {
-            m_RasterizerStateExDesc->SamplePositionsX[j] = samplePositionState.positions[j].x + 8;
-            m_RasterizerStateExDesc->SamplePositionsY[j] = samplePositionState.positions[j].y + 8;
-        }
-
-        if (context.ext->IsNvAPIAvailable())
-        {
-            NvAPI_Status result = NvAPI_D3D11_CreateRasterizerState(m_VersionedDevice->ptr, m_RasterizerStateExDesc, (ID3D11RasterizerState**)&newState.ptr);
-            if (result != NVAPI_OK)
-                REPORT_ERROR(m_Device.GetLog(), "NvAPI_D3D11_CreateRasterizerState() - FAILED!");
-        }
-        else
-            REPORT_ERROR(m_Device.GetLog(), "Programmable Sample Locations feature is only supported on NVIDIA GPUs on DX11! Ignoring...");
+        REPORT_ERROR(m_Device.GetLog(), "Programmable Sample Locations feature is not supported in DX11! Ignoring...");
 
         if (!newState.ptr)
             newState.ptr = m_RasterizerState;

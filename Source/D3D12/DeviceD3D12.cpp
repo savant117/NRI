@@ -79,7 +79,7 @@ Result DeviceD3D12::Create(const DeviceCreationD3D12Desc& deviceCreationDesc)
         const LUID luid = m_Device->GetAdapterLuid();
 
         ComPtr<IDXGIFactory4> DXGIFactory;
-        HRESULT result = CreateDXGIFactory(IID_PPV_ARGS(&DXGIFactory));
+        HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DXGIFactory));
         RETURN_ON_BAD_HRESULT(GetLog(), result, "Failed to create IDXGIFactory4");
 
         result = DXGIFactory->EnumAdapterByLuid(luid, IID_PPV_ARGS(&m_Adapter));
@@ -126,7 +126,7 @@ Result DeviceD3D12::Create(IDXGIAdapter* dxgiAdapter, const DeviceCreationDesc& 
         //    debugController1->SetEnableGPUBasedValidation(true);
     }
 
-    HRESULT hr = D3D12CreateDevice(dxgiAdapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_Device));
+    HRESULT hr = D3D12CreateDevice(dxgiAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
     if (FAILED(hr))
     {
         REPORT_ERROR(GetLog(), "D3D12CreateDevice() failed, error code: 0x%X.", hr);
@@ -226,6 +226,10 @@ inline Result DeviceD3D12::GetDisplays(Display** displays, uint32_t& displayNum)
 
 inline Result DeviceD3D12::GetDisplaySize(Display& display, uint16_t& width, uint16_t& height)
 {
+#ifdef UWP
+    MaybeUnused(display, width, height);
+    return Result::UNSUPPORTED;
+#else
     Display* address = &display;
 
     if (address == nullptr)
@@ -257,6 +261,7 @@ inline Result DeviceD3D12::GetDisplaySize(Display& display, uint16_t& width, uin
     height = uint16_t(rect.bottom - rect.top);
 
     return Result::SUCCESS;
+#endif
 }
 
 void DeviceD3D12::DestroySwapChain(SwapChain& swapChain)
@@ -702,7 +707,7 @@ Result DeviceD3D12::CreateImplementation(Interface*& entity, const Args&... args
 inline Vendor GetVendor(ID3D12Device* device)
 {
     ComPtr<IDXGIFactory4> DXGIFactory;
-    CreateDXGIFactory(IID_PPV_ARGS(&DXGIFactory));
+    CreateDXGIFactory1(IID_PPV_ARGS(&DXGIFactory));
 
     DXGI_ADAPTER_DESC desc = {};
     if (DXGIFactory)

@@ -37,12 +37,10 @@ CommandBufferD3D11::CommandBufferD3D11(DeviceD3D11& deviceImpl, const VersionedC
     m_DeviceImpl(deviceImpl)
 {
     m_Context->QueryInterface(IID_PPV_ARGS(&m_Annotation));
-    m_Context.ext->BeginUAVOverlap(m_Context);
 }
 
 CommandBufferD3D11::~CommandBufferD3D11()
 {
-    m_Context.ext->EndUAVOverlap(m_Context);
 }
 
 Result CommandBufferD3D11::Create(ID3D11DeviceContext* precreatedContext)
@@ -58,7 +56,6 @@ Result CommandBufferD3D11::Create(ID3D11DeviceContext* precreatedContext)
 
     hr = context->QueryInterface(__uuidof(ID3D11DeviceContext4), (void**)&m_Context.ptr);
     m_Context.version = 4;
-    m_Context.ext = m_Device.ext;
     if (FAILED(hr))
     {
         REPORT_WARNING(m_DeviceImpl.GetLog(), "QueryInterface(ID3D11DeviceContext4) - FAILED!");
@@ -86,8 +83,6 @@ Result CommandBufferD3D11::Create(ID3D11DeviceContext* precreatedContext)
 
     hr = m_Context->QueryInterface(IID_PPV_ARGS(&m_Annotation));
     RETURN_ON_BAD_HRESULT(m_DeviceImpl.GetLog(), hr, "QueryInterface(ID3DUserDefinedAnnotation) - FAILED!");
-
-    m_Context.ext->BeginUAVOverlap(m_Context);
 
     return Result::SUCCESS;
 }
@@ -153,8 +148,6 @@ void CommandBufferD3D11::SetDepthBounds(float boundsMin, float boundsMax)
 {
     if (m_DepthBounds[0] != boundsMin || m_DepthBounds[1] != boundsMax)
     {
-        m_Context.ext->SetDepthBounds(m_Context, boundsMin, boundsMax);
-
         m_DepthBounds[0] = boundsMin;
         m_DepthBounds[1] = boundsMax;
     }
@@ -307,12 +300,14 @@ void CommandBufferD3D11::DrawIndexed(uint32_t indexNum, uint32_t instanceNum, ui
 
 void CommandBufferD3D11::DrawIndirect(const Buffer& buffer, uint64_t offset, uint32_t drawNum, uint32_t stride)
 {
-    m_Context.ext->MultiDrawIndirect(m_Context, (BufferD3D11&)buffer, offset, drawNum, stride);
+    MaybeUnused(buffer, offset, drawNum, stride);
+    REPORT_ERROR(m_DeviceImpl.GetLog(), "DrawIndirect() - UNSUPPORTED!");
 }
 
 void CommandBufferD3D11::DrawIndexedIndirect(const Buffer& buffer, uint64_t offset, uint32_t drawNum, uint32_t stride)
 {
-    m_Context.ext->MultiDrawIndexedIndirect(m_Context, (BufferD3D11&)buffer, offset, drawNum, stride);
+    MaybeUnused(buffer, offset, drawNum, stride);
+    REPORT_ERROR(m_DeviceImpl.GetLog(), "DrawIndexedIndirect() - UNSUPPORTED!");
 }
 
 void CommandBufferD3D11::CopyBuffer(Buffer& dstBuffer, uint64_t dstOffset, const Buffer& srcBuffer, uint64_t srcOffset, uint64_t size)
@@ -451,9 +446,6 @@ void CommandBufferD3D11::PipelineBarrier(const TransitionBarrierDesc* transition
         if ((bufferDesc.prevAccess & STORAGE_MASK) && (bufferDesc.nextAccess & STORAGE_MASK))
             result = dependency;
     }
-
-    if (result != NO_WFI)
-        m_Context.ext->WaitForDrain(m_Context, result);
 }
 
 void CommandBufferD3D11::BeginQuery(const QueryPool& queryPool, uint32_t offset)

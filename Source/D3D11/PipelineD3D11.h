@@ -74,7 +74,6 @@ namespace nri
         ComPtr<ID3D11BlendState1> m_BlendState;
 
         ID3D11RasterizerState2* m_RasterizerState = nullptr;
-        NvAPI_D3D11_RASTERIZER_DESC_EX* m_RasterizerStateExDesc = nullptr;
 
         D3D11_PRIMITIVE_TOPOLOGY m_Topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
         Color32f m_BlendFactor = {};

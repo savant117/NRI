@@ -363,7 +363,7 @@ Result CreateDeviceD3D11(const DeviceCreationD3D11Desc& deviceCreationD3D11Desc,
     RETURN_ON_BAD_HRESULT(log, hr, "Can't create device. IDXGIDevice::GetAdapter() failed. (result: %d)", (int32_t)hr);
 
     DeviceD3D11* implementation = Allocate<DeviceD3D11>(allocator, log, allocator);
-    const nri::Result result = implementation->Create(deviceCreationDesc, adapter, d3d11Device, (AGSContext*)deviceCreationD3D11Desc.agsContextAssociatedWithDevice);
+    const nri::Result result = implementation->Create(deviceCreationDesc, adapter, d3d11Device);
 
     if (result == nri::Result::SUCCESS)
     {

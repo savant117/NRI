@@ -65,8 +65,6 @@ D3D11_BLEND_OP GetD3D11BlendOpFromBlendFunc(nri::BlendFunc blendFunc);
 D3D11_BLEND GetD3D11BlendFromBlendFactor(nri::BlendFactor blendFactor);
 D3D11_LOGIC_OP GetD3D11LogicOpFromLogicFunc(nri::LogicFunc logicalFunc);
 
-struct AGSContext;
-struct D3D11Extensions;
 struct IDXGISwapChain4;
 
 struct VersionedDevice
@@ -81,7 +79,6 @@ struct VersionedDevice
     { return ptr.GetInterface(); }
 
     ComPtr<ID3D11Device5> ptr;
-    const D3D11Extensions* ext = nullptr;
     bool isDeferredContextsEmulated = false;
     uint8_t version = 0;
 };
@@ -115,7 +112,6 @@ struct VersionedContext
 
     ComPtr<ID3D11DeviceContext4> ptr;
     ComPtr<ID3D11Multithread> multiThread;
-    const D3D11Extensions* ext = nullptr;
     CRITICAL_SECTION* criticalSection;
     uint8_t version = 0;
 };
@@ -304,5 +300,4 @@ struct SamplePositionsState
     }
 };
 
-#include "D3D11Extensions.h"
 #include "DeviceD3D11.h"

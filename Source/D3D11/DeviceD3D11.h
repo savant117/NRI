@@ -29,7 +29,7 @@ namespace nri
         { return m_CoreInterface; }
 
         bool GetOutput(Display* display, ComPtr<IDXGIOutput>& output) const;
-        Result Create(const DeviceCreationDesc& deviceCreationDesc, IDXGIAdapter* adapter, ID3D11Device* precreatedDevice, AGSContext* agsContext);
+        Result Create(const DeviceCreationDesc& deviceCreationDesc, IDXGIAdapter* adapter, ID3D11Device* precreatedDevice);
 
         //======================================================================================================================
         // NRI
@@ -96,8 +96,6 @@ namespace nri
         nri::Result CreateImplementationWithNonEmptyConstructor(Interface*& entity, ConstructorArg&& constructorArg, const Args&... args);
 
     private:
-        // don't sort - ~D3D11Extensions must be called last!
-        D3D11Extensions m_Ext = {};
         VersionedDevice m_Device = {};
         VersionedContext m_ImmediateContext = {};
         Vector<CommandQueueD3D11> m_CommandQueues;

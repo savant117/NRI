@@ -43,6 +43,7 @@ NRI_ENUM
     WAYLAND,
     METAL,
     DROID,
+    UNIVERSAL,
 
     MAX_NUM
 );
@@ -74,6 +75,11 @@ NRI_STRUCT(AndroidWindow)
     void* window;
 };
 
+NRI_STRUCT(UWPWindow)
+{
+    void* coreWindow;
+};
+
 NRI_UNION(Window)
 {
     NRI_NAME(WindowsWindow) windows;
@@ -81,6 +87,7 @@ NRI_UNION(Window)
     NRI_NAME(WaylandWindow) wayland;
     NRI_NAME(MetalWindow) metal;
     NRI_NAME(AndroidWindow) android;
+    NRI_NAME(UWPWindow) uwp;
 };
 
 // SwapChain buffers will be created as "color attachment" resources

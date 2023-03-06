@@ -18,4 +18,9 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 DXGI_FORMAT GetDXGIFormat(nri::Format format);
 
 #define NRI_TEMP_NODE_MASK 0x1
+#ifdef UWP
+// TODO no debug names on UWP?
+#define SET_D3D_DEBUG_OBJECT_NAME(obj, name) obj; name;
+#else
 #define SET_D3D_DEBUG_OBJECT_NAME(obj, name) if (obj) obj->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)std::strlen(name), name)
+#endif

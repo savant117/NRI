@@ -56,7 +56,7 @@ bool DeviceD3D11::GetOutput(Display* display, ComPtr<IDXGIOutput>& output) const
     return SUCCEEDED(result);
 }
 
-Result DeviceD3D11::Create(const DeviceCreationDesc& deviceCreationDesc, IDXGIAdapter* adapter, ID3D11Device* device, AGSContext* agsContext)
+Result DeviceD3D11::Create(const DeviceCreationDesc& deviceCreationDesc, IDXGIAdapter* adapter, ID3D11Device* device)
 {
     m_SkipLiveObjectsReporting = deviceCreationDesc.skipLiveObjectsReporting;
     m_Adapter = adapter;
@@ -65,8 +65,6 @@ Result DeviceD3D11::Create(const DeviceCreationDesc& deviceCreationDesc, IDXGIAd
     adapter->GetDesc(&desc);
 
     const Vendor vendor = GetVendorFromID(desc.VendorId);
-
-    m_Ext.Create(GetLog(), vendor, agsContext, device != nullptr);
 
     if (!device)
     {
@@ -77,21 +75,12 @@ Result DeviceD3D11::Create(const DeviceCreationDesc& deviceCreationDesc, IDXGIAd
             D3D_FEATURE_LEVEL_11_0
         };
 
-        if (m_Ext.IsAGSAvailable())
-        {
-            device = m_Ext.CreateDeviceUsingAGS(adapter, levels.data(), levels.size(), flags);
-            if (device == nullptr)
-                return Result::FAILURE;
-        }
-        else
-        {
-            HRESULT hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, flags, levels.data(), (uint32_t)levels.size(), D3D11_SDK_VERSION, &device, nullptr, nullptr);
+        HRESULT hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, flags, levels.data(), (uint32_t)levels.size(), D3D11_SDK_VERSION, &device, nullptr, nullptr);
 
-            if (flags && (uint32_t)hr == 0x887a002d)
-                hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, 0, &levels[0], (uint32_t)levels.size(), D3D11_SDK_VERSION, &device, nullptr, nullptr);
+        if (flags && (uint32_t)hr == 0x887a002d)
+            hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, 0, &levels[0], (uint32_t)levels.size(), D3D11_SDK_VERSION, &device, nullptr, nullptr);
 
-            RETURN_ON_BAD_HRESULT(GetLog(), hr, "D3D11CreateDevice() - FAILED!");
-        }
+        RETURN_ON_BAD_HRESULT(GetLog(), hr, "D3D11CreateDevice() - FAILED!");
     }
     else
         device->AddRef();
@@ -113,7 +102,6 @@ void DeviceD3D11::InitVersionedDevice(ID3D11Device* device, bool isDeferredConte
 {
     HRESULT hr = device->QueryInterface(__uuidof(ID3D11Device5), (void**)&m_Device.ptr);
     m_Device.version = 5;
-    m_Device.ext = &m_Ext;
     if (FAILED(hr))
     {
         REPORT_WARNING(GetLog(), "QueryInterface(ID3D11Device5) - FAILED!");
@@ -151,7 +139,7 @@ void DeviceD3D11::InitVersionedDevice(ID3D11Device* device, bool isDeferredConte
     if (FAILED(hr) || !threadingCaps.DriverConcurrentCreates)
         REPORT_WARNING(GetLog(), "Concurrent resource creation is not supported by the driver!");
 
-    m_Device.isDeferredContextsEmulated = !m_Ext.IsNvAPIAvailable() || isDeferredContextsEmulationRequested;
+    m_Device.isDeferredContextsEmulated = isDeferredContextsEmulationRequested;
 
     if (!threadingCaps.DriverCommandLists)
     {
@@ -168,7 +156,6 @@ void DeviceD3D11::InitVersionedContext()
 
     HRESULT hr = immediateContext->QueryInterface(__uuidof(ID3D11DeviceContext4), (void**)&m_ImmediateContext.ptr);
     m_ImmediateContext.version = 4;
-    m_ImmediateContext.ext = &m_Ext;
     if (FAILED(hr))
     {
         REPORT_WARNING(GetLog(), "QueryInterface(ID3D11DeviceContext4) - FAILED!");
@@ -762,7 +749,7 @@ Result CreateDeviceD3D11(const DeviceCreationDesc& deviceCreationDesc, DeviceBas
     }
 
     DeviceD3D11* implementation = Allocate<DeviceD3D11>(allocator, log, allocator);
-    const nri::Result result = implementation->Create(deviceCreationDesc, adapter, nullptr, nullptr);
+    const nri::Result result = implementation->Create(deviceCreationDesc, adapter, nullptr);
 
     if (result == nri::Result::SUCCESS)
     {
