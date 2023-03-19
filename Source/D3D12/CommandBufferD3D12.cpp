@@ -387,7 +387,7 @@ inline void CommandBufferD3D12::UploadBufferToTexture(Texture& dstTexture, const
     srcTextureCopyLocation.PlacedFootprint.Footprint.RowPitch = srcDataLayoutDesc.rowPitch;
 
     const uint16_t(&offset)[3] = dstRegionDesc.offset;
-    D3D12_BOX box = { offset[0], offset[1], offset[2], uint16_t(offset[0] + size[0]), uint16_t(offset[1] + size[1]), uint16_t(offset[2] + size[2]) };
+    D3D12_BOX box = { 0, 0, 0, uint16_t(size[0]), uint16_t(size[1]), uint16_t(size[2]) };
 
     m_GraphicsCommandList->CopyTextureRegion(&dstTextureCopyLocation, offset[0], offset[1], offset[2], &srcTextureCopyLocation, &box);
 }

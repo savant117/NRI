@@ -20,6 +20,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 #include "PipelineLayoutD3D11.h"
 #include "PipelineD3D11.h"
 #include "TextureD3D11.h"
+#include <stdexcept>
 
 using namespace nri;
 
@@ -386,7 +387,51 @@ void CommandBufferD3D11::UploadBufferToTexture(Texture& dstTexture, const Textur
     uint32_t dstSubresource = dst.GetSubresourceIndex(dstRegionDesc);
 
     uint8_t* data = (uint8_t*)src.Map(MapType::READ, srcDataLayoutDesc.offset);
-    m_Context->UpdateSubresource(dst, dstSubresource, &dstBox, data, srcDataLayoutDesc.rowPitch, srcDataLayoutDesc.slicePitch);
+
+    D3D11_DEVICE_CONTEXT_TYPE contextType = m_Context->GetType();
+
+    bool needWorkaround = false;
+    if (D3D11_DEVICE_CONTEXT_DEFERRED == contextType)
+    {
+        D3D11_FEATURE_DATA_THREADING threadingCaps = { FALSE, FALSE };
+
+        auto hr = m_Device->CheckFeatureSupport(D3D11_FEATURE_THREADING, &threadingCaps, sizeof(threadingCaps));
+        if (SUCCEEDED(hr))
+        {
+            if (!threadingCaps.DriverCommandLists)
+            {
+                needWorkaround = true;
+            }
+        }
+    }
+
+    const void* pAdjustedSrcData = data;
+
+    if (needWorkaround)
+    {
+        throw std::runtime_error("Need to implement UploadBufferToTexture() workaround in DX11");
+
+        //D3D11_BOX alignedBox = dstBox;
+
+        // TODO check if texture is block compressed and adjust accordingly
+        /*
+        if (isCompressed)
+        {
+            alignedBox.left /= 4;
+            alignedBox.right /= 4;
+            alignedBox.top /= 4;
+            alignedBox.bottom /= 4;
+        }
+        */
+
+        // TODO read bytes per element from texture format
+        //int srcBytesPerElement = 4;
+
+        //pAdjustedSrcData = ((const BYTE*)data) - (alignedBox.front * srcDataLayoutDesc.slicePitch) - (alignedBox.top * srcDataLayoutDesc.rowPitch) - (alignedBox.left * srcBytesPerElement);
+    }
+
+
+    m_Context->UpdateSubresource(dst, dstSubresource, &dstBox, pAdjustedSrcData, srcDataLayoutDesc.rowPitch, srcDataLayoutDesc.slicePitch);
     src.Unmap();
 }
 
